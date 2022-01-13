@@ -1,0 +1,17 @@
+{
+  "name": "telegram-message-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.2",
+    "superagent": "^7.0.2",
+    "telegraf": "^4.5.2"
+  }
+}
