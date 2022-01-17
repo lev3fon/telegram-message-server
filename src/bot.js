@@ -2,87 +2,57 @@ const {Telegraf} = require('telegraf')
 const {checkHealth} = require('./models/check')
 const {Urls} = require('./db-models/index')
 
-const bot = new Telegraf('5016091202:AAGRRRz9PvT6a2386TNZgVYeb8OMWNnvaBs')
+const bot = new Telegraf(config.bot.token)
 
-bot.start((ctx) => ctx.reply('Драсте'))
-bot.hears('lol', (ctx) => ctx.reply('kek'))
-bot.hears('list sites', async (ctx) => {
-    const ans = await getListSites(ctx.update.message.from.id)
-    ctx.reply(ans)
+bot.start((ctx) => ctx.reply('Драсте')) // add bot purpose
+bot.help((ctx) => ctx.reply(`
+• check [url] - проверяет доступность сайта 
+• add [url] - сохранят сайт
+• list all - список всех сохранённых сайтов
+• check all - проверяет все сохранённые сайты
+• delete [url] - удаляет сайт из сохранённых
+`))
+
+bot.hears('list all', async (ctx) => {
+    const ans = await listUrls(getUserIdFromContext(ctx))
+    ctx.reply(ans.join('\n'))
 })
 bot.hears('check all', async (ctx) => {
-    const ans = await checkAll(ctx.update.message.from.id)
-    ctx.reply(ans)
+    const ans = await checkUrls(getUserIdFromContext(ctx))
+    ctx.reply(ans.map(element => `${element.url} ${element.status}`).join('\n'))
 })
 
 bot.on('message', async (ctx) => {
-    const ans = await messageParser(ctx.update.message.text, ctx.update.message.from.id)
-    console.log(ans)
+    const ans = await messageParser(ctx.update.message.text, getUserIdFromContext(ctx))
     ctx.reply(ans)
 })
 
-const messageParser = async (message, userId = undefined) => {
+const getUserIdFromContext = (ctx) => {
+    try {
+        return ctx.update.message.from.id
+    } catch (e) {
+        console.log('wrong ctx format', ctx)
+    }
+}
+
+const messageParser = async (message, userId) => {
     const parts = message.split(' ')
 
     switch (parts[0]) {
         case 'check': {
-            return prettyfyCheckHealthMessage(await checkHealth(parts[1]))
+            return prettifyCheckHealthMessage(await checkUrl(parts[1]))
         }
         case 'add': {
-            await Urls.create({userId: userId, url: parts[1]})
+            await insertUrl(userId, url)
             return `Ресурс ${parts[1]} добавлен`
         }
         case 'delete': {
-            try {
-                await Urls.destroy({
-                    where: {
-                        userId: userId,
-                        url: parts[1]
-                    }
-                })
-                return `${parts[1]} удалён`
-            } catch (error){
-                return 'Произошла ошибка во время удаления, возможно такой сайт уже удалён'
-            }
+            await deleteUrl(userId, url)
+            return `${url} удалён`
         }
         default:
             return 'unknown command'
     }
-}
-
-const checkAll = async (userId) => {
-    const urls = await Urls.findAll({
-        where: {
-            userId: userId
-        }
-    })
-
-    const res = []
-    for (let urlModel of urls) {
-        const statusMessage = await checkHealth(urlModel.url)
-        res.push(`${urlModel.url} ${statusMessage.status}`)
-    }
-
-    res.sort()
-
-    return res.join('\n')
-}
-
-const getListSites = async (userId) => {
-    const urls = await Urls.findAll({
-        where: {
-            userId: userId
-        }
-    })
-
-    const res = []
-    for (let urlModel of urls) {
-        res.push(urlModel.url)
-    }
-
-    res.sort()
-
-    return res.join('\n')
 }
 
 const prettyfyCheckHealthMessage = (checkMessage) => {
