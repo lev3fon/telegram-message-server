@@ -1,6 +1,6 @@
-const {Telegraf} = require('telegraf')
-const {checkHealth} = require('./models/check')
-const {Urls} = require('./db-models/index')
+const config = require('./config')
+const { Telegraf } = require('telegraf')
+const { checkUrl, listUrls, checkUrls, insertUrl, deleteUrl } = require('./models/url')
 
 const bot = new Telegraf(config.bot.token)
 
@@ -37,7 +37,7 @@ const getUserIdFromContext = (ctx) => {
 
 const messageParser = async (message, userId) => {
     const parts = message.split(' ')
-
+    const url = parts[1]
     switch (parts[0]) {
         case 'check': {
             return prettifyCheckHealthMessage(await checkUrl(parts[1]))
@@ -55,7 +55,7 @@ const messageParser = async (message, userId) => {
     }
 }
 
-const prettyfyCheckHealthMessage = (checkMessage) => {
+const prettifyCheckHealthMessage = (checkMessage) => { // add 'default' to switch case
     switch (checkMessage.statusCode) {
         case 200:
             return 'Запрашиваемый ресурс работает'
