@@ -25,11 +25,25 @@ const messageParser = async (message, userId = undefined) => {
     const parts = message.split(' ')
 
     switch (parts[0]) {
-        case 'check':
+        case 'check': {
             return prettyfyCheckHealthMessage(await checkHealth(parts[1]))
+        }
         case 'add': {
             await Urls.create({userId: userId, url: parts[1]})
             return `Ресурс ${parts[1]} добавлен`
+        }
+        case 'delete': {
+            try {
+                await Urls.destroy({
+                    where: {
+                        userId: userId,
+                        url: parts[1]
+                    }
+                })
+                return `${parts[1]} удалён`
+            } catch (error){
+                return 'Произошла ошибка во время удаления, возможно такой сайт уже удалён'
+            }
         }
         default:
             return 'unknown command'
@@ -38,7 +52,7 @@ const messageParser = async (message, userId = undefined) => {
 
 const checkAll = async (userId) => {
     const urls = await Urls.findAll({
-        where:{
+        where: {
             userId: userId
         }
     })
@@ -56,7 +70,7 @@ const checkAll = async (userId) => {
 
 const getListSites = async (userId) => {
     const urls = await Urls.findAll({
-        where:{
+        where: {
             userId: userId
         }
     })
@@ -71,7 +85,7 @@ const getListSites = async (userId) => {
     return res.join('\n')
 }
 
-const prettyfyCheckHealthMessage = (checkMessage) =>{
+const prettyfyCheckHealthMessage = (checkMessage) => {
     switch (checkMessage.statusCode) {
         case 200:
             return 'Запрашиваемый ресурс работает'
