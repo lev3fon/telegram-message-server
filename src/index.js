@@ -2,6 +2,7 @@ const express = require('express')
 const cookieParser = require('cookie-parser');
 
 const {checkUrl, listUrls, checkUrls, insertUrl, deleteUrl} = require('./models/url')
+const {handleReqWithUrl, handleReqWithUserId, handleReqWithUserIdAndUrl} = require('./models/req-handler')
 
 const app = express()
 app.use(cookieParser())
