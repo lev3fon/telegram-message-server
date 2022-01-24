@@ -2,9 +2,9 @@
   "name": "telegram-message-server",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "src/bot.js",
   "scripts": {
-    "start": "node src"
+    "start": "node src/bot.js"
   },
   "keywords": [],
   "author": "",
