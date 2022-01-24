@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 6432
 
-CMD [ "node", "bot.js" ]
+CMD [ "node", "src/bot.js" ]
