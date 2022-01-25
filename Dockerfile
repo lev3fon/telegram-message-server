@@ -4,9 +4,11 @@ WORKDIR /usr/src/app
 
 #Install app dependencies
 COPY package*.json ./
-RUN npm install
 
 COPY . .
+
+RUN npm install
+#RUN npx sequelize db:migrate
 
 EXPOSE 6432
 

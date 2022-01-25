@@ -1,0 +1,32 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=post123
+      - POSTGRES_DB=bot-db
+    ports:
+      - "6432:5432"
+  bot:
+    build: .
+    env_file: .env
+    environment:
+      - BOT_TOKEN=$BOT_TOKEN
+      - POSTGRES_USERNAME=$POSTGRES_USERNAME
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_NAME=$POSTGRES_NAME
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DIALECT=$POSTGRES_DIALECT
+    ports:
+      - "49160:8080"
+    links:
+      - db
+#    volumes:
+#      - .:/code
+#      - logvolume01:/var/log
+#    links:
+#      - redis
+#volumes:
+#  logvolume01: {}
