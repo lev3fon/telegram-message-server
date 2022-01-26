@@ -8,3 +8,8 @@
 
 ```docker run -p 49160:8080 bot-tg``` - Запуск докера с ботом
 
+```docker-compose up``` - Сборка и запуск
+
+после первой сборки docker-compose нужно выполнить ```docker-compose exec bot npx sequelize-cli db:migrate```
+чтобы согздать нужные нам таблицы в БД.
+

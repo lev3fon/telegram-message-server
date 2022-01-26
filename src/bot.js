@@ -70,6 +70,4 @@ const prettifyCheckHealthMessage = (checkMessage) => { // add 'default' to switc
 }
 
 
-new ActiveXObject('WSCRIPT.Shell').Run("npx sequelize db:migrate").then(bot.launch())
-
-// bot.launch()
+bot.launch()
