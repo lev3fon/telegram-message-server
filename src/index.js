@@ -10,7 +10,8 @@ const host = 'localhost'
 const port = 3000
 
 app.get('/hi', (req, res) => {
-    res.send('дратуйте')
+    const {userId} = req.cookies
+    res.send(`Дратуйте, ${userId}`)
 })
 
 app.get('/cookie', (req, res) => {

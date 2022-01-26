@@ -1,6 +1,7 @@
 const config = require('./config')
-const { Telegraf } = require('telegraf')
-const { checkUrl, listUrls, checkUrls, insertUrl, deleteUrl } = require('./models/url')
+const {Telegraf} = require('telegraf')
+const {checkUrl, listUrls, checkUrls, insertUrl, deleteUrl} = require('./models/url')
+const superagent = require('superagent');
 
 const bot = new Telegraf(config.bot.token)
 
@@ -13,13 +14,18 @@ bot.help((ctx) => ctx.reply(`
 • delete [url] - удаляет сайт из сохранённых
 `))
 
+bot.hears('hi', async (ctx) => {
+    const res = await getReqWithOnlyCookie('hi', getUserIdFromContext(ctx))
+    ctx.reply(res.text)
+})
+
 bot.hears('list all', async (ctx) => {
-    const ans = await listUrls(getUserIdFromContext(ctx))
-    ctx.reply(ans.join('\n'))
+    const res = await getReqWithOnlyCookie('listAll', getUserIdFromContext(ctx))
+    ctx.reply(res.body.join('\n'))
 })
 bot.hears('check all', async (ctx) => {
-    const ans = await checkUrls(getUserIdFromContext(ctx))
-    ctx.reply(ans.map(element => `${element.url} ${element.status}`).join('\n'))
+    const res = await getReqWithOnlyCookie('checkAll', getUserIdFromContext(ctx))
+    ctx.reply(res.body.map(element => `${element.url} ${element.status}`).join('\n'))
 })
 
 bot.on('message', async (ctx) => {
@@ -40,14 +46,16 @@ const messageParser = async (message, userId) => {
     const url = parts[1]
     switch (parts[0]) {
         case 'check': {
-            return prettifyCheckHealthMessage(await checkUrl(parts[1]))
+            const res = await getReq('checkUrl', url)
+            return prettifyCheckHealthMessage(res.body)
         }
         case 'add': {
-            await insertUrl(userId, url)
-            return `Ресурс ${parts[1]} добавлен`
+            await postReq('insert', url, userId)
+            // await insertUrl(userId, url)
+            return `Ресурс ${url} добавлен`
         }
         case 'delete': {
-            await deleteUrl(userId, url)
+            await deleteReq('delete', url, userId)
             return `${url} удалён`
         }
         default:
@@ -69,5 +77,33 @@ const prettifyCheckHealthMessage = (checkMessage) => { // add 'default' to switc
     }
 }
 
+const postReq = async (command, url, userId) => {
+    await superagent
+        .post(`http://localhost:3000/${command}`)
+        .query(`url=${url}`)
+        .set('Cookie', `userId=${userId}`)
+}
+
+const deleteReq = async (command, url, userId) => {
+    await superagent
+        .delete(`http://localhost:3000/${command}`)
+        .query(`url=${url}`)
+        .set('Cookie', `userId=${userId}`)
+}
+
+const getReq = async (command, url, userId) => {
+    const res = await superagent
+        .get(`http://localhost:3000/${command}`)
+        .query(`url=${url}`)
+        .set('Cookie', `userId=${userId}`)
+    return res
+}
+
+const getReqWithOnlyCookie = async (command, userId) => {
+    const res = await superagent
+        .get(`http://localhost:3000/${command}`)
+        .set('Cookie', `userId=${userId}`)
+    return res
+}
 
 bot.launch()
