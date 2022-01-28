@@ -1,48 +1,6 @@
 const config = require('./config')
-const { Telegraf, Markup } = require('telegraf')
+const { Telegraf, session, Scenes: { BaseScene, Stage }, Markup } = require('telegraf')
 const superagent = require('superagent');
-
-const bot = new Telegraf(config.bot.token)
-
-bot.start((ctx) => ctx.reply('Драсте')) // add bot purpose
-bot.help((ctx) => ctx.reply(`
-• /menu - добаляет keyboard с командами
-• check [url] - проверяет доступность сайта 
-• add [url] - сохранят сайт
-• list all - список всех сохранённых сайтов
-• check all - проверяет все сохранённые сайты
-• delete [url] - удаляет сайт из сохранённых
-`))
-
-bot.command('menu', async (ctx) => {
-    return await ctx.reply('Меню', Markup
-        .keyboard([
-            [ 'check', 'add' ],
-            [ 'check all', 'list all' ],
-            [ 'delete' ]
-        ])
-        .resize()
-    )
-})
-
-bot.hears('hi', async (ctx) => {
-    const res = await getReqWithOnlyCookie('hi', getUserIdFromContext(ctx))
-    ctx.reply(res.text)
-})
-
-bot.hears('list all', async (ctx) => {
-    const res = await getReqWithOnlyCookie('listAll', getUserIdFromContext(ctx))
-    ctx.reply(res.body.join('\n'))
-})
-bot.hears('check all', async (ctx) => {
-    const res = await getReqWithOnlyCookie('checkAll', getUserIdFromContext(ctx))
-    ctx.reply(res.body.map(element => `${ element.url } ${ element.status }`).join('\n'))
-})
-
-bot.on('message', async (ctx) => {
-    const ans = await messageParser(ctx.update.message.text, getUserIdFromContext(ctx))
-    ctx.reply(ans)
-})
 
 const getUserIdFromContext = (ctx) => {
     try {
@@ -115,5 +73,118 @@ const getReqWithOnlyCookie = async (command, userId) => {
         .set('Cookie', `userId=${ userId }`)
     return res
 }
+
+const checkUrlScene = new BaseScene('checkUrl')
+checkUrlScene.enter((ctx => {
+    ctx.reply(`
+    Отправьте url ресурса, для проеврки его работоспособности
+    
+    /cancel - отменить действие
+    `)
+}))
+checkUrlScene.command('cancel', (ctx) => {
+    ctx.scene.leave()
+    ctx.reply('Действие отменено')
+})
+checkUrlScene.on('message', async (ctx) => {
+    const url = ctx.update.message.text
+    const res = await getReq('checkUrl', url)
+    ctx.reply(prettifyCheckHealthMessage(res.body))
+    ctx.scene.leave()
+})
+
+const addUrlScene = new BaseScene('addUrl')
+addUrlScene.enter((ctx => {
+    ctx.reply(`
+    Отправьте url ресурса, который хотите сохранить
+    
+    /cancel - отменить действие
+    `)
+}))
+addUrlScene.command('cancel', (ctx) => {
+    ctx.scene.leave()
+    ctx.reply('Действие отменено')
+})
+addUrlScene.on('message', async (ctx) => {
+    const url = ctx.update.message.text
+    await postReq('insert', url, getUserIdFromContext(ctx))
+    ctx.reply(`Ресурс ${url} добавлен`)
+    ctx.scene.leave()
+})
+
+const deleteUrlScene = new BaseScene('deleteUrl')
+deleteUrlScene.enter((ctx => {
+    ctx.reply(`
+    Отправьте url ресурса, который хотите сохранить
+    
+    /cancel - отменить действие
+    `)
+}))
+deleteUrlScene.command('cancel', (ctx) => {
+    ctx.scene.leave()
+    ctx.reply('Действие отменено')
+})
+deleteUrlScene.on('message', async (ctx) => {
+    const url = ctx.update.message.text
+    await deleteReq('delete', url, getUserIdFromContext(ctx))
+    ctx.reply(`Ресурс ${url} удалён`)
+    ctx.scene.leave()
+})
+
+const stage = new Stage([checkUrlScene, addUrlScene, deleteUrlScene])
+const bot = new Telegraf(config.bot.token)
+
+bot.use(session())
+bot.use(stage.middleware())
+
+bot.start((ctx) => ctx.reply('Драсте')) // add bot purpose
+bot.help((ctx) => ctx.reply(`
+• /menu - добаляет keyboard с командами
+• check [url] - проверяет доступность сайта 
+• add [url] - сохранят сайт
+• list all - список всех сохранённых сайтов
+• check all - проверяет все сохранённые сайты
+• delete [url] - удаляет сайт из сохранённых
+`))
+
+bot.hears('check', (ctx) => {
+    ctx.scene.enter('checkUrl')
+})
+bot.hears('add', (ctx) => {
+    ctx.scene.enter('addUrl')
+})
+bot.hears('delete', (ctx) => {
+    ctx.scene.enter('deleteUrl')
+})
+
+bot.command('menu', async (ctx) => {
+    return await ctx.reply('Меню', Markup
+        .keyboard([
+            [ 'check', 'add' ],
+            [ 'check all', 'list all' ],
+            [ 'delete' ]
+        ])
+        .resize()
+    )
+})
+
+bot.hears('hi', async (ctx) => {
+    const res = await getReqWithOnlyCookie('hi', getUserIdFromContext(ctx))
+    ctx.reply(res.text)
+})
+
+bot.hears('list all', async (ctx) => {
+    const res = await getReqWithOnlyCookie('listAll', getUserIdFromContext(ctx))
+    ctx.reply(res.body.join('\n'))
+})
+bot.hears('check all', async (ctx) => {
+    const res = await getReqWithOnlyCookie('checkAll', getUserIdFromContext(ctx))
+    ctx.reply(res.body.map(element => `${ element.url } ${ element.status }`).join('\n'))
+})
+
+bot.on('message', async (ctx) => {
+    const ans = await messageParser(ctx.update.message.text, getUserIdFromContext(ctx))
+    ctx.reply(ans)
+})
 
 bot.launch()
