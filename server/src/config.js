@@ -8,5 +8,10 @@ module.exports = {
         host: process.env.POSTGRES_HOST,
         port: process.env.POSTGRES_PORT,
         dialect: process.env.POSTGRES_DIALECT,
+    },
+
+    server: {
+        host: process.env.SERVER_HOST,
+        port: process.env.SERVER_PORT
     }
 }

@@ -2,6 +2,9 @@ const config = require('./config')
 const { Telegraf, session, Scenes: { BaseScene, Stage }, Markup } = require('telegraf')
 const superagent = require('superagent');
 
+const serverReqHost = config.server.host
+const serverReqPort = config.server.port
+
 const getUserIdFromContext = (ctx) => {
     try {
         return ctx.update.message.from.id
@@ -47,21 +50,21 @@ const prettifyCheckHealthMessage = (checkMessage) => { // add 'default' to switc
 
 const postReq = async (command, url, userId) => {
     await superagent
-        .post(`http://localhost:3000/${ command }`)
+        .post(`${serverReqHost}:${serverReqPort}/${ command }`)
         .query(`url=${ url }`)
         .set('Cookie', `userId=${ userId }`)
 }
 
 const deleteReq = async (command, url, userId) => {
     await superagent
-        .delete(`http://localhost:3000/${ command }`)
+        .delete(`${serverReqHost}:${serverReqPort}/${ command }`)
         .query(`url=${ url }`)
         .set('Cookie', `userId=${ userId }`)
 }
 
 const getReq = async (command, url, userId) => {
     const res = await superagent
-        .get(`http://localhost:3000/${ command }`)
+        .get(`${serverReqHost}:${serverReqPort}/${ command }`)
         .query(`url=${ url }`)
         .set('Cookie', `userId=${ userId }`)
     return res
@@ -69,7 +72,7 @@ const getReq = async (command, url, userId) => {
 
 const getReqWithOnlyCookie = async (command, userId) => {
     const res = await superagent
-        .get(`http://localhost:3000/${ command }`)
+        .get(`${serverReqHost}:${serverReqPort}/${ command }`)
         .set('Cookie', `userId=${ userId }`)
     return res
 }

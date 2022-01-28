@@ -1,3 +1,4 @@
+const config = require('./config')
 const express = require('express')
 const cookieParser = require('cookie-parser');
 
@@ -6,8 +7,8 @@ const {handleReqWithUrl, handleReqWithUserId, handleReqWithUserIdAndUrl} = requi
 
 const app = express()
 app.use(cookieParser())
-const host = 'localhost'
-const port = 3000
+const host = config.server.host
+const port = config.server.port
 
 app.get('/hi', (req, res) => {
     const {userId} = req.cookies
