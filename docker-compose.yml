@@ -7,10 +7,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=post123
       - POSTGRES_DB=bot-db
+      - PGDATA=/var/lib/postgresql/data/bot
     ports:
       - "6432:5432"
-#    volumes:
-#      - ./pg_data:/var/lib/postgresql/data/pgdata - нужно как-то научиться сохранять БД
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data/bot
   bot:
     build: ./bot
     container_name: tg-bot
